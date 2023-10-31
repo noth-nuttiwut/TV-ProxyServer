@@ -2,14 +2,14 @@
 class OrderMesssage:
   """_summary_
   Example
-  symbol = {{tikcer}}, exchange = {{exchange}}, side = {{strategy.order.action}}, message = {{strategy.order.comment}}, size = {{strategy.position_size}}, ID = {{strategy.order.id}}, price = {{strategy.order.price}}
+  symbol = {{tikcer}}, exchange = {{exchange}}, side = {{strategy.order.action}}, message = {{strategy.order.comment}}, size = {{strategy.position_size}}, ID = {{strategy.order.id}}, price = {{strategy.order.price}}, network = main
   """
 
   def __init__(self, message):
     self.raw_message = message
     self.__dict = self.parse()
 
-  def parse(self):
+  def parse(self, ignore_uppercase_key=["JWT"]):
     result = {}
     key_values = self.raw_message.split(", ")
     for kv in key_values:
@@ -18,12 +18,12 @@ class OrderMesssage:
         continue
         
       if "." not in v:
-        result[k] = v.upper()  
+        result[k] = v if k in ignore_uppercase_key else v.upper()  
       else:
         try:
           result[k] = float(v)
         except Exception as e:
-          result[k] = v.upper()
+          result[k] = v if k in ignore_uppercase_key else v.upper() 
       
     return result
 
@@ -49,7 +49,12 @@ class OrderMesssage:
 
   @property
   def message(self):
-    return self.__dict.get("message", None)
+    msg = self.__dict.get("message", None)
+    if not msg:
+      return msg
+    
+    order_splitted = msg.split(" - ")
+    return order_splitted[0]
 
   @property
   def id(self):
@@ -58,10 +63,30 @@ class OrderMesssage:
   @property
   def price(self):
     return self.__dict.get("price", None)
+  
+  @property
+  def jwt(self):
+    return self.__dict.get("JWT", None)
+  
+  @property
+  def balance(self):
+    return self.__dict.get("balance", None)
+  
+  @property
+  def network(self):
+    return self.__dict.get("network", None)
+  
+  @property
+  def tp(self):
+    return self.__dict.get("tp", None)
+  
+  @property
+  def sl(self):
+    return self.__dict.get("sl", None)
 
 
 if __name__ == "__main__":
-  order = OrderMesssage("symbol = ARBUSDT, exchange = Binance, side = sell, message = Short-Entry, size = -4000.0")
+  order = OrderMesssage("symbol = ARBUSDT, exchange = Binance, side = sell, message = Short-Entry, size = -4000.0, network = MAINNET")
   print(order.symbol, order.exchange, order.side)
   print(order.json)
   
